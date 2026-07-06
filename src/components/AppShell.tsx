@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { BookOpen, Library, Compass, Users, Sparkles, User as UserIcon, LogOut, Settings } from "lucide-react";
+import { BookOpen, Library, Compass, Users, Sparkles, User as UserIcon, LogOut, Settings, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Profile { id: string; handle: string; display_name: string; avatar_url: string | null }
@@ -29,6 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: "/discover", label: "Discover", icon: Compass },
     { to: "/buddies", label: "Buddies", icon: Users },
     { to: "/memories", label: "Memories", icon: BookOpen },
+    { to: "/wisdom", label: "Wisdom", icon: Award },
   ] as const;
 
   return (

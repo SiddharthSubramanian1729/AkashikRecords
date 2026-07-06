@@ -28,25 +28,32 @@ function AkashaPage() {
   const loadDashboard = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const [{ data: p }, { data: rooms }, { data: sessions }, { data: rels }, { data: mems }, { data: bms }] = await Promise.all([
+    const [{ data: p }, { data: rooms }, { data: sessions }, { data: rels }, { data: mems }, { count: memsCount }, { data: bms }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-      supabase.from("room_participants").select("room_id, rooms(id, name, current_page, status, mode, admin_user_id, books(id, title, author, cover_url, total_pages))").eq("user_id", user.id).is("left_at", null).limit(6),
+      supabase.from("room_participants").select("room_id, rooms(id, name, current_page, status, mode, admin_user_id, books(id, title, author, cover_url, total_pages))").eq("user_id", user.id).is("left_at", null),
       supabase.from("reading_sessions").select("page, seconds_on_page").eq("user_id", user.id),
-      supabase.from("relationships").select("id").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`).eq("status", "accepted"),
+      supabase.from("relationships").select("status").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
       supabase.from("memories").select("id, title, created_at, book_id, books(title)").order("created_at", { ascending: false }).limit(4),
+      supabase.from("memories").select("id", { count: "exact", head: true }),
       supabase.from("bookmarks").select("id").eq("user_id", user.id),
     ]);
     setProfile(p);
-    setCurrentRooms((rooms ?? []).filter((r: any) => r.rooms?.status === "active"));
+    
+    // Only display top 6 active rooms on the dashboard list
+    const activeRooms = (rooms ?? []).filter((r: any) => r.rooms?.status === "active");
+    setCurrentRooms(activeRooms.slice(0, 6));
+    
     setRecentMemories(mems ?? []);
     const totalPages = sessions?.length ?? 0;
     const totalSec = sessions?.reduce((a, s) => a + (s.seconds_on_page ?? 0), 0) ?? 0;
+    const acceptedBuddies = (rels ?? []).filter((r: any) => r.status === "accepted").length;
+
     setStats({
-      booksReading: new Set((rooms ?? []).map((r: any) => r.rooms?.books?.id).filter(Boolean)).size,
+      booksReading: new Set(activeRooms.map((r: any) => r.rooms?.books?.id).filter(Boolean)).size,
       pagesRead: totalPages,
       avgPace: totalPages ? Math.round(totalSec / totalPages) : 0,
-      buddies: rels?.length ?? 0,
-      memories: mems?.length ?? 0,
+      buddies: acceptedBuddies,
+      memories: memsCount ?? 0,
       bookmarks: bms?.length ?? 0,
     });
   };

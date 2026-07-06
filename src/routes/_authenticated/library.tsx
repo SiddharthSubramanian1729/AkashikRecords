@@ -20,10 +20,11 @@ function LibraryPage() {
   const load = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("library_entries")
-      .select("id, added_at, books(id, title, author, cover_url, total_pages, source, file_path, external_url)")
+      .select("id, added_at, status, books(id, title, author, cover_url, total_pages, source, file_path, external_url)")
       .eq("user_id", user.id)
+      .eq("status", "reading")
       .order("added_at", { ascending: false });
     setBooks(data ?? []);
     setLoading(false);
@@ -131,7 +132,7 @@ function LibraryPage() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {books.map(e => e.books && (
-              <div key={e.id} className="panel tactical-chamfer hover:shadow-tactical transition group">
+              <div key={e.id} className="panel tactical-chamfer hover:shadow-tactical transition group relative">
                 <Link to="/book/$bookId" params={{ bookId: e.books.id }} className="block">
                   {e.books.cover_url ? (
                     <img src={e.books.cover_url} alt={e.books.title} className="w-full aspect-[2/3] object-cover" />

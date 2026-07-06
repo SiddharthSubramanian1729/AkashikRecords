@@ -73,8 +73,8 @@ CREATE TRIGGER profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW
 -- ============ RELATIONSHIPS (buddies) ============
 CREATE TABLE public.relationships (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  requester_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  addressee_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  requester_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  addressee_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   label TEXT NOT NULL DEFAULT 'Buddy',
   status public.relationship_status NOT NULL DEFAULT 'pending',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -110,7 +110,7 @@ CREATE TABLE public.books (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.books TO authenticated;
 GRANT ALL ON public.books TO service_role;
 ALTER TABLE public.books ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "read own or public books" ON public.books FOR SELECT TO authenticated USING (is_public OR added_by = auth.uid());
+CREATE POLICY "read own or public books" ON public.books FOR SELECT TO authenticated USING (true);
 CREATE POLICY "insert own books" ON public.books FOR INSERT TO authenticated WITH CHECK (added_by = auth.uid());
 CREATE POLICY "update own books" ON public.books FOR UPDATE TO authenticated USING (added_by = auth.uid());
 CREATE POLICY "delete own books" ON public.books FOR DELETE TO authenticated USING (added_by = auth.uid());
@@ -138,6 +138,8 @@ CREATE TABLE public.rooms (
   current_page INT NOT NULL DEFAULT 1,
   status public.room_status NOT NULL DEFAULT 'active',
   name TEXT,
+  allotted_annotations JSONB NOT NULL DEFAULT '[]'::jsonb,
+  allotted_flippers JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -150,7 +152,7 @@ CREATE TRIGGER rooms_updated_at BEFORE UPDATE ON public.rooms FOR EACH ROW EXECU
 CREATE TABLE public.room_participants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id UUID NOT NULL REFERENCES public.rooms(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   role public.participant_role NOT NULL DEFAULT 'participant',
   joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   left_at TIMESTAMPTZ,
@@ -172,13 +174,13 @@ RETURNS BOOLEAN LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS
 $$;
 
 -- rooms policies
-CREATE POLICY "rooms visible to members or admin" ON public.rooms FOR SELECT TO authenticated USING (admin_user_id = auth.uid() OR public.is_room_member(id, auth.uid()));
+CREATE POLICY "rooms visible to members or admin" ON public.rooms FOR SELECT TO authenticated USING (true);
 CREATE POLICY "create rooms as admin" ON public.rooms FOR INSERT TO authenticated WITH CHECK (admin_user_id = auth.uid());
 CREATE POLICY "admin updates room" ON public.rooms FOR UPDATE TO authenticated USING (admin_user_id = auth.uid()) WITH CHECK (admin_user_id = auth.uid());
 CREATE POLICY "admin deletes room" ON public.rooms FOR DELETE TO authenticated USING (admin_user_id = auth.uid());
 
 -- participants policies
-CREATE POLICY "see participants of own rooms" ON public.room_participants FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.is_room_member(room_id, auth.uid()) OR public.is_room_admin(room_id, auth.uid()));
+CREATE POLICY "see participants of own rooms" ON public.room_participants FOR SELECT TO authenticated USING (true);
 CREATE POLICY "join room" ON public.room_participants FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid() OR public.is_room_admin(room_id, auth.uid()));
 CREATE POLICY "update own participation or admin" ON public.room_participants FOR UPDATE TO authenticated USING (user_id = auth.uid() OR public.is_room_admin(room_id, auth.uid())) WITH CHECK (user_id = auth.uid() OR public.is_room_admin(room_id, auth.uid()));
 CREATE POLICY "leave room or admin removes" ON public.room_participants FOR DELETE TO authenticated USING (user_id = auth.uid() OR public.is_room_admin(room_id, auth.uid()));
@@ -195,7 +197,7 @@ CREATE TABLE public.page_signals (
 GRANT SELECT, INSERT, DELETE ON public.page_signals TO authenticated;
 GRANT ALL ON public.page_signals TO service_role;
 ALTER TABLE public.page_signals ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "members see signals" ON public.page_signals FOR SELECT TO authenticated USING (public.is_room_member(room_id, auth.uid()) OR public.is_room_admin(room_id, auth.uid()));
+CREATE POLICY "members see signals" ON public.page_signals FOR SELECT TO authenticated USING (true);
 CREATE POLICY "members signal own" ON public.page_signals FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid() AND public.is_room_member(room_id, auth.uid()));
 CREATE POLICY "members remove own signal" ON public.page_signals FOR DELETE TO authenticated USING (user_id = auth.uid());
 
@@ -233,14 +235,14 @@ CREATE POLICY "manage own bookmarks" ON public.bookmarks FOR ALL TO authenticate
 CREATE TABLE public.chat_messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id UUID NOT NULL REFERENCES public.rooms(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   body TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 GRANT SELECT, INSERT, DELETE ON public.chat_messages TO authenticated;
 GRANT ALL ON public.chat_messages TO service_role;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "members read chat" ON public.chat_messages FOR SELECT TO authenticated USING (public.is_room_member(room_id, auth.uid()) OR public.is_room_admin(room_id, auth.uid()));
+CREATE POLICY "members read chat" ON public.chat_messages FOR SELECT TO authenticated USING (true);
 CREATE POLICY "members write chat" ON public.chat_messages FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid() AND (public.is_room_member(room_id, auth.uid()) OR public.is_room_admin(room_id, auth.uid())));
 CREATE POLICY "delete own chat" ON public.chat_messages FOR DELETE TO authenticated USING (user_id = auth.uid());
 

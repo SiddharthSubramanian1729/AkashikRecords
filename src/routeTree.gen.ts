@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedWisdomRouteImport } from './routes/_authenticated/wisdom'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedMemoriesRouteImport } from './routes/_authenticated/memories'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedWisdomRoute = AuthenticatedWisdomRouteImport.update({
+  id: '/wisdom',
+  path: '/wisdom',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRoute
   '/memories': typeof AuthenticatedMemoriesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/wisdom': typeof AuthenticatedWisdomRoute
   '/book/$bookId': typeof AuthenticatedBookBookIdRoute
   '/profile/$handle': typeof AuthenticatedProfileHandleRoute
   '/room/$roomId': typeof AuthenticatedRoomRoomIdRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRoute
   '/memories': typeof AuthenticatedMemoriesRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/wisdom': typeof AuthenticatedWisdomRoute
   '/book/$bookId': typeof AuthenticatedBookBookIdRoute
   '/profile/$handle': typeof AuthenticatedProfileHandleRoute
   '/room/$roomId': typeof AuthenticatedRoomRoomIdRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/memories': typeof AuthenticatedMemoriesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/wisdom': typeof AuthenticatedWisdomRoute
   '/_authenticated/book/$bookId': typeof AuthenticatedBookBookIdRoute
   '/_authenticated/profile/$handle': typeof AuthenticatedProfileHandleRoute
   '/_authenticated/room/$roomId': typeof AuthenticatedRoomRoomIdRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/memories'
     | '/settings'
+    | '/wisdom'
     | '/book/$bookId'
     | '/profile/$handle'
     | '/room/$roomId'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/library'
     | '/memories'
     | '/settings'
+    | '/wisdom'
     | '/book/$bookId'
     | '/profile/$handle'
     | '/room/$roomId'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/_authenticated/library'
     | '/_authenticated/memories'
     | '/_authenticated/settings'
+    | '/_authenticated/wisdom'
     | '/_authenticated/book/$bookId'
     | '/_authenticated/profile/$handle'
     | '/_authenticated/room/$roomId'
@@ -195,6 +207,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/wisdom': {
+      id: '/_authenticated/wisdom'
+      path: '/wisdom'
+      fullPath: '/wisdom'
+      preLoaderRoute: typeof AuthenticatedWisdomRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
@@ -269,6 +288,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedMemoriesRoute: typeof AuthenticatedMemoriesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedWisdomRoute: typeof AuthenticatedWisdomRoute
   AuthenticatedBookBookIdRoute: typeof AuthenticatedBookBookIdRoute
   AuthenticatedProfileHandleRoute: typeof AuthenticatedProfileHandleRoute
   AuthenticatedRoomRoomIdRoute: typeof AuthenticatedRoomRoomIdRoute
@@ -281,6 +301,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedMemoriesRoute: AuthenticatedMemoriesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedWisdomRoute: AuthenticatedWisdomRoute,
   AuthenticatedBookBookIdRoute: AuthenticatedBookBookIdRoute,
   AuthenticatedProfileHandleRoute: AuthenticatedProfileHandleRoute,
   AuthenticatedRoomRoomIdRoute: AuthenticatedRoomRoomIdRoute,

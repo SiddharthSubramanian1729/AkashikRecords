@@ -145,7 +145,7 @@ function DiscoverPage() {
     setLoading(true);
     try {
       const fn = source === "gutenberg" ? searchGutenberg : source === "openlibrary" ? searchOpenLibrary : searchLibby;
-      setResults(await fn({ data: q }));
+      setResults((await fn({ data: q })) as CatalogBook[]);
     } catch { toast.error("Search failed"); }
     finally { setLoading(false); }
   };

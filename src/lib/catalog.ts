@@ -13,7 +13,8 @@ export interface CatalogBook {
 }
 
 export const searchGutenberg = createServerFn({ method: "GET" })
-  .handler(async ({ data: q }: { data: string }) => {
+  .handler(async ({ data }: { data: any }) => {
+    const q = data as string;
     if (!q.trim()) return [];
     try {
       const r = await fetch(`https://gutendex.com/books?search=${encodeURIComponent(q)}`);
@@ -45,7 +46,8 @@ export const searchGutenberg = createServerFn({ method: "GET" })
   });
 
 export const searchOpenLibrary = createServerFn({ method: "GET" })
-  .handler(async ({ data: q }: { data: string }) => {
+  .handler(async ({ data }: { data: any }) => {
+    const q = data as string;
     if (!q.trim()) return [];
     try {
       const r = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20`);
@@ -67,11 +69,12 @@ export const searchOpenLibrary = createServerFn({ method: "GET" })
   });
 
 export const searchLibby = createServerFn({ method: "GET" })
-  .handler(async ({ data: q }: { data: string }) => {
+  .handler(async ({ data }: { data: any }) => {
+    const q = data as string;
     // Libby has no public reader API. Fetch OpenLibrary results marked as Libby.
     try {
       const fallback = await searchOpenLibrary({ data: q });
-      return fallback.slice(0, 10).map(b => ({ ...b, source: "libby" as const, external_url: null }));
+      return fallback.slice(0, 10).map((b: any) => ({ ...b, source: "libby" as const, external_url: null }));
     } catch (e) {
       console.error("Libby search error:", e);
       return [];
@@ -79,7 +82,8 @@ export const searchLibby = createServerFn({ method: "GET" })
   });
 
 export const fetchExternalBookText = createServerFn({ method: "GET" })
-  .handler(async ({ data: url }: { data: string }) => {
+  .handler(async ({ data }: { data: any }) => {
+    const url = data as string;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Failed to fetch external book: ${res.statusText}`);
